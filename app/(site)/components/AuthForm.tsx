@@ -2,8 +2,12 @@
 import { useCallback, useState } from "react";
 
 // lib,modules
+import axios from "axios";
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter } from "next/navigation";
 import { BsGithub, BsGoogle  } from 'react-icons/bs';
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 
 //components
 import Button from "@/app/components/button/Button";
@@ -13,6 +17,7 @@ import AuthSocialButton from "./AuthSocialButton";
 type Variant = 'LOGIN' | 'REGISTER';
 
 const AuthForm = () => {
+  const router = useRouter()
   const [variant, setVariant] = useState<Variant>('LOGIN')
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,15 +47,51 @@ const AuthForm = () => {
     }
   )
 
-  const onSubmit: SubmitHandler<FieldValues> = () => {
+  const onSubmit: SubmitHandler<FieldValues> = async (data) => {
     setIsLoading(true);
 
     if (variant === 'REGISTER') {
-      // Axios Register
+        //apiのregisterを使ってPOSTさせる
+        const res = await fetch('api/register/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+
+        //サインイン
+        const registerSignIn = await signIn('credentials', {
+          ...data,
+          redirect: false,
+        })
+
+        if(registerSignIn?.error) {
+          toast.error('Invalid credentials!');
+          console.log("error");
+        }
+
+        if(registerSignIn?.ok) {
+          router.push('/conversations')
+        }
+        setIsLoading(false);
     }
 
     if (variant === 'LOGIN') {
-      // NextAuth Sign
+      signIn('credentials', {
+        ...data,
+        redirect: false
+      })
+      .then((callback) => {
+        if (callback?.error) {
+          toast.error('Invalid credentials!');
+        }
+
+        if (callback?.ok) {
+          router.push('/conversations')
+        }
+      })
+      .finally(() => setIsLoading(false))
     }
 
   }
@@ -58,6 +99,18 @@ const AuthForm = () => {
   //Google,Github Sign in
   const socialAction = (action: string) => {
     setIsLoading(true);
+
+    signIn(action, { redirect: false })
+      .then((callback) => {
+        if (callback?.error) {
+          toast.error('Invalid credentials!');
+        }
+
+        if (callback?.ok) {
+          router.push('/conversations')
+        }
+      })
+      .finally(() => setIsLoading(false));
   }
 
   
