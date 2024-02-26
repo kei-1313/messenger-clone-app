@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // lib,modules
 import axios from "axios";
@@ -17,9 +17,18 @@ import AuthSocialButton from "./AuthSocialButton";
 type Variant = 'LOGIN' | 'REGISTER';
 
 const AuthForm = () => {
+  const session = useSession();
   const router = useRouter()
   const [variant, setVariant] = useState<Variant>('LOGIN')
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (session?.status === 'authenticated') {
+      console.log("authenticated");
+      console.log(session);
+      router.push('/conversations')
+    }
+  },[session?.status, router])
 
   const toggleVariant = useCallback(() => {
     if (variant === 'LOGIN') {
