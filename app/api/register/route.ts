@@ -14,8 +14,10 @@ export async function POST(
     password
   } = body
 
+  //パスワードのハッシュ化
   const hashedPassword = await bcrypt.hash(password, 12)
 
+  //新しいユーザを作成し、データベースへ登録
   const user = await prisma.user.create({
     data: {
       email,
